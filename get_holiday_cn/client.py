@@ -150,10 +150,8 @@ class getHoliday(object):
           },
           "holiday": {              // 只有当type为2，3时，该对象才存在
             "holiday": false,     // true表示是节假日，false表示是调休
-            "name": "国庆前调休",  // 节假日的中文名。如果是调休，则是调休的中文名，例如'国庆前调休'
-            "wage": 1,            // 薪资倍数，1表示是1倍工资
-            "after": false,       // 只在调休下有该字段。true表示放完假后调休，false表示先调休再放假
-            "target": '国庆节'     // 只在调休下有该字段。表示调休的节假日
+            "name": "国庆调休",  // 节假日的中文名。如果是调休，则是调休的中文名，例如'国庆节调休'
+            "date": '2021-10-09'     // 当前请求的日期
           }
         }
         组装数据
@@ -197,6 +195,6 @@ if __name__ == '__main__':
     # print(getGithubHolidayJson.get_current_isoweekday())
     # print(json.dumps(g.get_before_and_after_holiday_json()))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
-    print(g.assemble_holiday_data())
+    print(g.assemble_holiday_data(today='2021-10-9'))
     # print(g.get_holiday_json(current_year=100))
 
