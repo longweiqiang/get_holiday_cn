@@ -190,7 +190,7 @@ class getHoliday(object):
 
 
 if __name__ == '__main__':
-    g = getGithubHolidayJson()
+    g = getHoliday()
     # print(getGithubHolidayJson.get_current_isoweekday())
     # print(json.dumps(g.get_before_and_after_holiday_json()))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
