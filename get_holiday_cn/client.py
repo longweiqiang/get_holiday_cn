@@ -38,7 +38,7 @@ class YearKeyError(Exception):
     def __str__(self):
         return self.msg
 
-class getGithubHolidayJson(object):
+class getHoliday(object):
 
     def __init__(self):
         pass
