@@ -160,7 +160,10 @@ class getHoliday(object):
         :return:
         """
         # 获取年份
-        year_data = datetime.datetime.strptime(today, "%Y-%m-%d").date().year
+        if not today:
+            year_data = datetime.datetime.now().strftime('%Y')
+        else:
+            year_data = datetime.datetime.strptime(today, "%Y-%m-%d").date().year
         today_data = self.get_today_data(today=today, current_year=year_data)[0]
         today_status = self.get_today_data(today=today, current_year=year_data)[1]
         # print(today_data)
@@ -194,6 +197,6 @@ if __name__ == '__main__':
     # print(getGithubHolidayJson.get_current_isoweekday())
     # print(json.dumps(g.get_before_and_after_holiday_json()))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
-    print(g.assemble_holiday_data(today='1991-9-1'))
+    print(g.assemble_holiday_data())
     # print(g.get_holiday_json(current_year=100))
 
