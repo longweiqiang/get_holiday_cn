@@ -16,7 +16,7 @@ pip install get_holiday_cn
 ```
 
 ### 数据说明
-```json
+```
 {
       "code": 0,              // 0服务正常。-1服务出错
       "type": {
@@ -40,5 +40,8 @@ pip install get_holiday_cn
 from get_holiday_cn.client import getHoliday
 
 client = getHoliday()
+# 获取今日数据
 print(client.assemble_holiday_data())
+# 指定日期获取数据
+print(client.assemble_holiday_data(today='2021-10-01'))
 ```
