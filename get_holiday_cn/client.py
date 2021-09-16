@@ -162,8 +162,9 @@ class getHoliday(object):
             year_data = datetime.datetime.now().strftime('%Y')
         else:
             year_data = datetime.datetime.strptime(today, "%Y-%m-%d").date().year
-        today_data = self.get_today_data(today=today, current_year=year_data)[0]
-        today_status = self.get_today_data(today=today, current_year=year_data)[1]
+        today_d = self.get_today_data(today=today, current_year=year_data)
+        today_data, today_status = today_d[0], today_d[1]
+        # today_status = self.get_today_data(today=today, current_year=year_data)[1]
         # print(today_data)
         week = today_data['week']
         json_data = {
