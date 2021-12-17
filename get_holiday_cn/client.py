@@ -29,7 +29,7 @@ interface Holidays {
   }[]
 }
 """
-import datetime, requests
+import datetime, requests,json
 
 class YearKeyError(Exception):
     '''自定义异常：年份异常'''
@@ -62,18 +62,27 @@ class getHoliday(object):
         :param current_year: 要查询的年份
         :return:
         '''
-        url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
-        res = requests.get(url=url)
-        if res.status_code == 200:
-            return res.json()['days']
-        else:
-            print('主网址请求失败，正在发起重试！！！')
-            url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(year=current_year)
+        try:
+            with open(f"{current_year}.json",'r',encoding='utf-8') as f:
+                return json.load(f)['days']
+        except:
+            url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
             res = requests.get(url=url)
-            if res.status_code == 404:
-                raise YearKeyError(current_year)
-            else:
+            if res.status_code == 200:
+                with open(f"{current_year}.json",'w' ,encoding='utf-8') as f:
+                    json.dump(res.json(),f,ensure_ascii=False,indent=4)
                 return res.json()['days']
+            else:
+                print('主网址请求失败，正在发起重试！！！')
+                url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(year=current_year)
+                res = requests.get(url=url)
+                if res.status_code == 404:
+                    raise YearKeyError(current_year)
+                else:
+                    with open(f"{current_year}.json",'w' ,encoding='utf-8') as f:
+                        json.dump(res.json(),f,ensure_ascii=False,indent=4)
+                return res.json()['days']
+
 
     def get_before_and_after_holiday_json(self, current_year=None):
         '''
@@ -191,11 +200,18 @@ class getHoliday(object):
         return json_data
 
 
+def dateRange(start, end, step=1, _format="%Y-%m-%d"):  # 生成日期序列
+    strptime, strftime = datetime.datetime.strptime, datetime.datetime.strftime
+    days = (strptime(end, _format) - strptime(start, _format)).days
+    return [strftime(strptime(start, _format) + datetime.timedelta(i), _format) for i in range(0, days, step)]
+
 if __name__ == '__main__':
     g = getHoliday()
     # print(getGithubHolidayJson.get_current_isoweekday())
     # print(json.dumps(g.get_before_and_after_holiday_json()))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
-    print(g.assemble_holiday_data(today='2021-10-9'))
+    # 当天
+    # print(g.assemble_holiday_data(today='2021-10-9'))
     # print(g.get_holiday_json(current_year=100))
-
+    for i in dateRange('2021-12-17','2022-12-29'):
+        print(g.assemble_holiday_data(i))
