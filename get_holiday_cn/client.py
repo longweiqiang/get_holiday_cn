@@ -38,6 +38,15 @@ class YearKeyError(Exception):
     def __str__(self):
         return self.msg
 
+class HolidayError(Exception):
+    '''自定义异常：未知异常'''
+    def __init__(self):
+        self.msg = '主站及备用站点均无法访问，请稍后再试！'
+
+    def __str__(self):
+        return self.msg
+
+
 class getHoliday(object):
 
     def __init__(self):
@@ -66,22 +75,39 @@ class getHoliday(object):
             with open(f"{current_year}.json",'r',encoding='utf-8') as f:
                 return json.load(f)['days']
         except:
-            url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
-            res = requests.get(url=url)
-            if res.status_code == 200:
-                with open(f"{current_year}.json",'w' ,encoding='utf-8') as f:
-                    json.dump(res.json(),f,ensure_ascii=False,indent=4)
-                return res.json()['days']
-            else:
-                print('主网址请求失败，正在发起重试！！！')
-                url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(year=current_year)
-                res = requests.get(url=url)
-                if res.status_code == 404:
-                    raise YearKeyError(current_year)
+            try:
+                url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
+                res = requests.get(url=url, timeout=5)
+                if res.status_code == 200:
+                    with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                        json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                    return res.json()['days']
                 else:
-                    with open(f"{current_year}.json",'w' ,encoding='utf-8') as f:
-                        json.dump(res.json(),f,ensure_ascii=False,indent=4)
-                return res.json()['days']
+                    print('主网址请求失败，正在发起重试！！！')
+                    url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(
+                        year=current_year)
+                    res = requests.get(url=url, timeout=5)
+                    if res.status_code == 404:
+                        raise YearKeyError(current_year)
+                    else:
+                        with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                    return res.json()['days']
+            except:
+                try:
+                    print('主网址发生未知错误，正在请求备用站点！！！')
+                    # 主站挂了直接except,并存储到本地
+                    url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(
+                        year=current_year)
+                    res = requests.get(url=url)
+                    if res.status_code == 404:
+                        raise YearKeyError(current_year)
+                    else:
+                        with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                    return res.json()['days']
+                except:
+                    raise HolidayError()
 
 
     def get_before_and_after_holiday_json(self, current_year=None):
@@ -211,7 +237,7 @@ if __name__ == '__main__':
     # print(json.dumps(g.get_before_and_after_holiday_json()))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
     # 当天
-    # print(g.assemble_holiday_data(today='2021-10-9'))
+    print(g.assemble_holiday_data(today='2021-10-9'))
     # print(g.get_holiday_json(current_year=100))
-    for i in dateRange('2021-12-17','2022-12-29'):
-        print(g.assemble_holiday_data(i))
+    # for i in dateRange('2021-12-17','2022-12-29'):
+    #     print(g.assemble_holiday_data(i))
