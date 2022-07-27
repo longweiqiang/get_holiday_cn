@@ -29,7 +29,7 @@ interface Holidays {
   }[]
 }
 """
-import datetime, requests,json
+import datetime, requests, json, site
 
 class YearKeyError(Exception):
     '''自定义异常：年份异常'''
@@ -53,6 +53,13 @@ class getHoliday(object):
         pass
 
     @staticmethod
+    def get_get_holiday_cn_path():
+        try:
+            return site.getsitepackages()[0] + '/get_holiday_cn' + '/'
+        except Exception:
+            return ""
+
+    @staticmethod
     def get_current_year():
         '''获取当前的年份'''
         return datetime.datetime.now().year
@@ -72,15 +79,19 @@ class getHoliday(object):
         :return:
         '''
         try:
-            with open(f"{current_year}.json",'r',encoding='utf-8') as f:
+            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'r', encoding='utf-8') as f:
                 return json.load(f)['days']
         except:
             try:
                 url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
                 res = requests.get(url=url, timeout=5)
                 if res.status_code == 200:
-                    with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
-                        json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                    try:
+                        with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w', encoding='utf-8') as f:
+                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                    except FileNotFoundError:
+                        with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     return res.json()['days']
                 else:
                     print('主网址请求失败，正在发起重试！！！')
@@ -90,8 +101,13 @@ class getHoliday(object):
                     if res.status_code == 404:
                         raise YearKeyError(current_year)
                     else:
-                        with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
-                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                        try:
+                            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
+                                      encoding='utf-8') as f:
+                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                        except FileNotFoundError:
+                            with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     return res.json()['days']
             except:
                 try:
@@ -103,8 +119,13 @@ class getHoliday(object):
                     if res.status_code == 404:
                         raise YearKeyError(current_year)
                     else:
-                        with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
-                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                        try:
+                            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
+                                      encoding='utf-8') as f:
+                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                        except FileNotFoundError:
+                            with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     return res.json()['days']
                 except:
                     raise HolidayError()
@@ -236,6 +257,7 @@ if __name__ == '__main__':
     # print(getGithubHolidayJson.get_current_isoweekday())
     # print(json.dumps(g.get_before_and_after_holiday_json()))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
+    # print(g.get_get_holiday_cn_path())
     # 当天
     print(g.assemble_holiday_data(today='2021-10-9'))
     # print(g.get_holiday_json(current_year=100))
