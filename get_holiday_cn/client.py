@@ -29,7 +29,7 @@ interface Holidays {
   }[]
 }
 """
-import datetime, requests, json, site
+import datetime, requests, json, site, os
 
 class YearKeyError(Exception):
     '''自定义异常：年份异常'''
@@ -55,7 +55,11 @@ class getHoliday(object):
     @staticmethod
     def get_get_holiday_cn_path():
         try:
-            return site.getsitepackages()[0] + '/get_holiday_cn' + '/'
+            sitepackages = site.getsitepackages()
+            for sitepackage in sitepackages:
+                get_holiday_cn_path = sitepackage + '/get_holiday_cn' + '/'
+                if os.path.exist(get_holiday_cn_path):
+                    return get_holiday_cn_path
         except Exception:
             return ""
 
