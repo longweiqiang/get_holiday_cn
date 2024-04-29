@@ -61,6 +61,8 @@ class getHoliday(object):
                 get_holiday_cn_path = sitepackage + '/get_holiday_cn' + '/'
                 if os.path.exists(get_holiday_cn_path):
                     return get_holiday_cn_path
+                else:
+                    return ""
         except Exception:
             return ""
 
@@ -77,6 +79,23 @@ class getHoliday(object):
         else:
             return datetime.datetime.strptime(today, "%Y-%m-%d").isoweekday()
 
+    def get_local_holiday_json(self, current_year=None):
+        """
+        查询本地对应年份的json数据
+        :param current_year: 要查询的年份
+        :return:
+        """
+        try:
+            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'r', encoding='utf-8') as f:
+                list_data = json.load(f)['days']
+                # 针对本地已有年份，但年份文件中是空列表的情况做特殊处理==>重新获取一次远程仓库文件
+                # https://github.com/longweiqiang/get_holiday_cn/issues/4
+                if len(list_data) == 0:
+                    return self.get_holiday_json(current_year=current_year)
+                return list_data
+        except:
+            return self.get_holiday_json(current_year=current_year)
+
     def get_holiday_json(self, current_year=None):
         '''
         查询仓库中对应年份的json数据
@@ -84,57 +103,53 @@ class getHoliday(object):
         :return:
         '''
         try:
-            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'r', encoding='utf-8') as f:
-                return json.load(f)['days']
-        except:
-            try:
-                url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
-                # url = 'https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(year=current_year)
+            url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
+            # url = 'https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(year=current_year)
+            res = requests.get(url=url, timeout=5)
+            if res.status_code == 200:
+                try:
+                    with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w', encoding='utf-8') as f:
+                        json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                except FileNotFoundError:
+                    with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                        json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                return res.json()['days']
+            else:
+                print('主网址请求失败，正在发起重试！！！')
+                url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
+                    year=current_year)
                 res = requests.get(url=url, timeout=5)
-                if res.status_code == 200:
+                if res.status_code == 404:
+                    raise YearKeyError(current_year)
+                else:
                     try:
-                        with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w', encoding='utf-8') as f:
+                        with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
+                                  encoding='utf-8') as f:
                             json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     except FileNotFoundError:
                         with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
                             json.dump(res.json(), f, ensure_ascii=False, indent=4)
-                    return res.json()['days']
+                return res.json()['days']
+        except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout):
+            try:
+                print('主网址发生未知错误，正在请求备用站点！！！')
+                # 主站挂了直接except,并存储到本地
+                url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
+                    year=current_year)
+                res = requests.get(url=url)
+                if res.status_code == 404:
+                    raise YearKeyError(current_year)
                 else:
-                    print('主网址请求失败，正在发起重试！！！')
-                    url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
-                        year=current_year)
-                    res = requests.get(url=url, timeout=5)
-                    if res.status_code == 404:
-                        raise YearKeyError(current_year)
-                    else:
-                        try:
-                            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
-                                      encoding='utf-8') as f:
-                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
-                        except FileNotFoundError:
-                            with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
-                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
-                    return res.json()['days']
-            except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout):
-                try:
-                    print('主网址发生未知错误，正在请求备用站点！！！')
-                    # 主站挂了直接except,并存储到本地
-                    url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
-                        year=current_year)
-                    res = requests.get(url=url)
-                    if res.status_code == 404:
-                        raise YearKeyError(current_year)
-                    else:
-                        try:
-                            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
-                                      encoding='utf-8') as f:
-                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
-                        except FileNotFoundError:
-                            with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
-                                json.dump(res.json(), f, ensure_ascii=False, indent=4)
-                    return res.json()['days']
-                except:
-                    raise HolidayError()
+                    try:
+                        with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
+                                  encoding='utf-8') as f:
+                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                    except FileNotFoundError:
+                        with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
+                            json.dump(res.json(), f, ensure_ascii=False, indent=4)
+                return res.json()['days']
+            except:
+                raise HolidayError()
 
 
     def get_before_and_after_holiday_json(self, current_year=None):
@@ -262,11 +277,11 @@ def dateRange(start, end, step=1, _format="%Y-%m-%d"):  # 生成日期序列
 if __name__ == '__main__':
     g = getHoliday()
     # print(getGithubHolidayJson.get_current_isoweekday())
-    # print(json.dumps(g.get_before_and_after_holiday_json()))
+    # print(json.dumps(g.get_before_and_after_holiday_json(current_year=2024), ensure_ascii=False))
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
     # print(g.get_get_holiday_cn_path())
     # 当天
-    print(g.assemble_holiday_data(today='2018-12-29'))
+    print(g.assemble_holiday_data(today='2025-05-01'))
     # print(g.assemble_holiday_data(today='2022-10-1'))
     # print(g.get_holiday_json(current_year=2022))
     # for i in dateRange('2021-12-17','2022-12-29'):
