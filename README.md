@@ -48,3 +48,5 @@ print(client.assemble_holiday_data(today='2021-10-01'))
 刚刚推送了v1.0.5版本，在此版本前可能会获取到空数组的2023年json文件，导致现在23年假期更新后还是无法查到；如出现下图所示，可以删除本地已缓存的`2023.json`文件，下次再请求时会自动获取最新的数据
 ![企业微信截图_20221227160706](https://user-images.githubusercontent.com/22344864/209655031-1a3b4185-6b8c-436c-aaee-8371c6e2e1aa.png)
 
+### 2024/04/29 更新说明
+本次版本号v1.0.6，主要修复 [issues-4](https://github.com/longweiqiang/get_holiday_cn/issues/4) 的问题，在项目中增加了某个年份文件中返回空列表的情况判断
