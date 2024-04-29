@@ -12,7 +12,7 @@
 """
 https://github.com/NateScarlet/holiday-cn
 国内地址：
-https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{年份}.json
+https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{年份}.json
 https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{年份}.json
 数据格式：
 interface Holidays {
@@ -30,7 +30,7 @@ interface Holidays {
   }[]
 }
 """
-import datetime, requests, json, site
+import datetime, requests, json, site, os
 
 class YearKeyError(Exception):
     '''自定义异常：年份异常'''
@@ -56,7 +56,11 @@ class getHoliday(object):
     @staticmethod
     def get_get_holiday_cn_path():
         try:
-            return site.getsitepackages()[0] + '/get_holiday_cn' + '/'
+            sitepackages = site.getsitepackages()
+            for sitepackage in sitepackages:
+                get_holiday_cn_path = sitepackage + '/get_holiday_cn' + '/'
+                if os.path.exists(get_holiday_cn_path):
+                    return get_holiday_cn_path
         except Exception:
             return ""
 
@@ -85,6 +89,7 @@ class getHoliday(object):
         except:
             try:
                 url = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'.format(year=current_year)
+                # url = 'https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(year=current_year)
                 res = requests.get(url=url, timeout=5)
                 if res.status_code == 200:
                     try:
@@ -96,7 +101,7 @@ class getHoliday(object):
                     return res.json()['days']
                 else:
                     print('主网址请求失败，正在发起重试！！！')
-                    url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(
+                    url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
                         year=current_year)
                     res = requests.get(url=url, timeout=5)
                     if res.status_code == 404:
@@ -110,11 +115,11 @@ class getHoliday(object):
                             with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
                                 json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     return res.json()['days']
-            except:
+            except (requests.exceptions.ConnectionError,requests.exceptions.ReadTimeout):
                 try:
                     print('主网址发生未知错误，正在请求备用站点！！！')
                     # 主站挂了直接except,并存储到本地
-                    url = 'https://natescarlet.coding.net/p/github/d/holiday-cn/git/raw/master/{year}.json'.format(
+                    url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
                         year=current_year)
                     res = requests.get(url=url)
                     if res.status_code == 404:
@@ -134,7 +139,7 @@ class getHoliday(object):
 
     def get_before_and_after_holiday_json(self, current_year=None):
         '''
-        查询仓库中前后两年+当年的json数据
+        查询仓库中前后1年+当年的json数据
         :param current_year: 要查询的年份
         :return:
         '''
@@ -142,12 +147,9 @@ class getHoliday(object):
         # 所以这里稳定起见，查询当前年份前后一年
         if not current_year:
             current_year = self.get_current_year()
-        e_status = 0
         # 防止大于当前年份+2，造成查询仓库json返回404（仓库中最多只会存在当前年份+1的数据）
         if int(current_year) >= int(self.get_current_year()) + 1:
             current_year = self.get_current_year()
-            # 如果触发入参年份大于当前年份+2的场景，给个状态标识
-            e_status = -1
         year_list = [int(current_year)-1, int(current_year), int(current_year)+1]
         # print(year_list)
         data_list = []
@@ -155,7 +157,7 @@ class getHoliday(object):
             res = self.get_holiday_json(current_year=i)
             for n in res:
                 data_list.append(n)
-        return data_list, e_status
+        return data_list
 
     @staticmethod
     def get_weekday_enum_cn(week_day: int) -> str:
@@ -168,7 +170,8 @@ class getHoliday(object):
         if not today:
             today = datetime.datetime.now().strftime('%Y-%m-%d')
         all_holiday_json = self.get_before_and_after_holiday_json(current_year=current_year)
-        all_holiday_status = all_holiday_json[1]
+        # 状态初始值
+        all_holiday_status = 1
         # 判断当前是周几，如果大于周五的话，就代表是休息日
         isoweekday = self.get_current_isoweekday(today=today)
         if isoweekday > 5:
@@ -176,9 +179,11 @@ class getHoliday(object):
         else:
             is_off_day = False
         today_data = {'name': '', 'date': today, 'isOffDay': is_off_day}
-        for i in all_holiday_json[0]:
+        for i in all_holiday_json:
             # 兼容入参的today格式多样化（如：2020-10-1或者2020-1-1）
             if str(datetime.datetime.strptime(today, "%Y-%m-%d").date()) == i['date']:
+                # 如果能从已有数据中查到数据，则代表数据准确
+                all_holiday_status = 0
                 today_data = i
         today_data['week'] = isoweekday
         # 该场景为工作日
@@ -203,7 +208,7 @@ class getHoliday(object):
             "type": enum(0, 1, 2, 3), // 节假日类型，分别表示 工作日、周末、节日、调休。
             "name": "周六",         // 节假日类型中文名，可能值为 周一 至 周日、假期的名字、某某调休。
             "week": enum(1 - 7)    // 一周中的第几天。值为 1 - 7，分别表示 周一 至 周日。
-            "status": enum(0, 1)    // 数据场景类型，0来源于仓库中或者正常的上班日，数据可靠；1表示当前传入日期在仓库中未查询到，直接走系统计算，数据不可靠。
+            "status": enum(0, 1)    // 数据场景类型，0来源于仓库中的节假日或调休日；1表示当前传入日期在仓库中未查询到，直接走系统计算，可能为工作日或还未公布的节假日。
           },
           "holiday": {              // 只有当type为2，3时，该对象才存在
             "holiday": false,     // true表示是节假日，false表示是调休
@@ -220,6 +225,7 @@ class getHoliday(object):
         else:
             year_data = datetime.datetime.strptime(today, "%Y-%m-%d").date().year
         today_d = self.get_today_data(today=today, current_year=year_data)
+        # print(today_d)
         today_data, today_status = today_d[0], today_d[1]
         # today_status = self.get_today_data(today=today, current_year=year_data)[1]
         # print(today_data)
@@ -260,7 +266,9 @@ if __name__ == '__main__':
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
     # print(g.get_get_holiday_cn_path())
     # 当天
-    print(g.assemble_holiday_data(today='2021-10-9'))
-    # print(g.get_holiday_json(current_year=100))
+    print(g.assemble_holiday_data(today='2018-12-29'))
+    # print(g.assemble_holiday_data(today='2022-10-1'))
+    # print(g.get_holiday_json(current_year=2022))
     # for i in dateRange('2021-12-17','2022-12-29'):
     #     print(g.assemble_holiday_data(i))
+    # print(g.get_today_data(today='2022-10-1', current_year=2022))

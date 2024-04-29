@@ -13,7 +13,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name = "get_holiday_cn",
-    version = "1.0.4",
+    version = "1.0.5",
     author = "Weiqiang.long",
     description = "获取中国法定节假日",
     long_description = long_description,
