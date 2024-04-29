@@ -58,7 +58,7 @@ class getHoliday(object):
             sitepackages = site.getsitepackages()
             for sitepackage in sitepackages:
                 get_holiday_cn_path = sitepackage + '/get_holiday_cn' + '/'
-                if os.path.exist(get_holiday_cn_path):
+                if os.path.exists(get_holiday_cn_path):
                     return get_holiday_cn_path
         except Exception:
             return ""
