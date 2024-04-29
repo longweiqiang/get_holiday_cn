@@ -169,7 +169,7 @@ class getHoliday(object):
         # print(year_list)
         data_list = []
         for i in year_list:
-            res = self.get_holiday_json(current_year=i)
+            res = self.get_local_holiday_json(current_year=i)
             for n in res:
                 data_list.append(n)
         return data_list
@@ -283,7 +283,7 @@ if __name__ == '__main__':
     # 当天
     print(g.assemble_holiday_data(today='2025-05-01'))
     # print(g.assemble_holiday_data(today='2022-10-1'))
-    # print(g.get_holiday_json(current_year=2022))
+    # print(g.get_local_holiday_json(current_year=2022))
     # for i in dateRange('2021-12-17','2022-12-29'):
     #     print(g.assemble_holiday_data(i))
     # print(g.get_today_data(today='2022-10-1', current_year=2022))
