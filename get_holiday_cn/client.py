@@ -94,7 +94,12 @@ class getHoliday(object):
                     return self.get_holiday_json(current_year=current_year)
                 return list_data
         except:
-            return self.get_holiday_json(current_year=current_year)
+            # return self.get_holiday_json(current_year=current_year)
+            # Here we need to try to get the data instead of force get, because the remote repo may not have the data yet.
+            try:
+                return self.get_holiday_json(current_year=current_year)
+            except:
+                return []
 
     def get_holiday_json(self, current_year=None):
         '''
