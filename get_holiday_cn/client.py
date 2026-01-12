@@ -121,7 +121,7 @@ class getHoliday(object):
                 return res.json()['days']
             else:
                 print('主网址请求失败，正在发起重试！！！')
-                url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
+                url = 'https://ghfast.top/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
                     year=current_year)
                 res = requests.get(url=url, timeout=5)
                 if res.status_code == 404:
@@ -139,7 +139,7 @@ class getHoliday(object):
             try:
                 print('主网址发生未知错误，正在请求备用站点！！！')
                 # 主站挂了直接except,并存储到本地
-                url = 'https://ghproxy.com/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
+                url = 'https://ghfast.top/https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(
                     year=current_year)
                 res = requests.get(url=url)
                 if res.status_code == 404:
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
     # print(g.get_get_holiday_cn_path())
     # 当天
-    print(g.assemble_holiday_data(today='2025-05-01'))
+    print(g.assemble_holiday_data(today='2026-05-09'))
     # print(g.assemble_holiday_data(today='2022-10-1'))
     # print(g.get_local_holiday_json(current_year=2022))
     # for i in dateRange('2021-12-17','2022-12-29'):
